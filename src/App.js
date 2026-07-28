@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, RefreshCw, Camera } from 'lucide-react';
+import html2canvas from 'html2canvas';
 
 const App = () => {
   const [baladyUsers, setBaladyUsers] = useState(() => {
@@ -124,7 +125,6 @@ const App = () => {
       const element = document.getElementById('tracker-content');
       const clone = element.cloneNode(true);
       
-      // Determine which users to process based on section
       let usersToProcess = [];
       if (section === 'balady') {
         usersToProcess = [...baladyUsers];
@@ -134,13 +134,11 @@ const App = () => {
         usersToProcess = [...baladyUsers, ...ripcUsers];
       }
       
-      // Remove main header for individual screenshots
       if (section !== 'both') {
         const mainHeader = clone.querySelector('.main-header');
         if (mainHeader) mainHeader.remove();
       }
       
-      // If taking screenshot of specific section, remove the other section
       if (section === 'balady') {
         const ripcSection = clone.querySelector('#ripc-section');
         if (ripcSection) ripcSection.remove();
@@ -171,13 +169,11 @@ const App = () => {
         }
       });
       
-      // Process all select dropdowns and inputs for each row
       const tableRows = clone.querySelectorAll('tbody tr');
       tableRows.forEach((row, index) => {
         if (index < usersToProcess.length) {
           const user = usersToProcess[index];
           
-          // Replace restarts dropdown (column 5)
           const restartsTd = row.children[5];
           if (restartsTd) {
             const span = document.createElement('span');
@@ -188,7 +184,6 @@ const App = () => {
             restartsTd.appendChild(span);
           }
           
-          // Replace reason dropdown (column 7)
           const reasonTd = row.children[7];
           if (reasonTd) {
             const span = document.createElement('span');
@@ -203,7 +198,6 @@ const App = () => {
             reasonTd.appendChild(span);
           }
           
-          // Replace date input (column 8)
           const dateTd = row.children[8];
           if (dateTd) {
             const span = document.createElement('span');
@@ -236,7 +230,6 @@ const App = () => {
       
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const html2canvas = (await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm')).default;
       const canvas = await html2canvas(clone, {
         backgroundColor: '#f0f4ff',
         scale: 2.5,
