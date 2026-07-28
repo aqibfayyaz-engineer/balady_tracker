@@ -1,4 +1,3 @@
-import html2canvas from 'html2canvas';
 import React, { useState } from 'react';
 import { Download, RefreshCw, Camera } from 'lucide-react';
 
@@ -120,38 +119,142 @@ const App = () => {
     a.click();
   };
 
-  const takeScreenshot = async () => {
+  const takeScreenshot = async (section = 'both') => {
     try {
       const element = document.getElementById('tracker-content');
       const clone = element.cloneNode(true);
       
-      const cloneButtons = clone.querySelector('#action-buttons');
-      const cloneActionHeaders = clone.querySelectorAll('.action-column');
+      // Determine which users to process based on section
+      let usersToProcess = [];
+      if (section === 'balady') {
+        usersToProcess = [...baladyUsers];
+      } else if (section === 'ripc') {
+        usersToProcess = [...ripcUsers];
+      } else {
+        usersToProcess = [...baladyUsers, ...ripcUsers];
+      }
       
-      if (cloneButtons) cloneButtons.remove();
+      // Remove main header for individual screenshots
+      if (section !== 'both') {
+        const mainHeader = clone.querySelector('.main-header');
+        if (mainHeader) mainHeader.remove();
+      }
+      
+      // If taking screenshot of specific section, remove the other section
+      if (section === 'balady') {
+        const ripcSection = clone.querySelector('#ripc-section');
+        if (ripcSection) ripcSection.remove();
+      } else if (section === 'ripc') {
+        const baladySection = clone.querySelector('#balady-section');
+        if (baladySection) baladySection.remove();
+      }
+      
+      const cloneButtons = clone.querySelectorAll('.action-buttons');
+      cloneButtons.forEach(btn => btn.remove());
+      
+      const cloneActionHeaders = clone.querySelectorAll('.action-column');
       cloneActionHeaders.forEach(el => el.remove());
       
-      clone.style.position = 'absolute';
-      clone.style.left = '-9999px';
-      document.body.appendChild(clone);
-      
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      const canvas = await html2canvas(clone, {
-        backgroundColor: '#f0f4ff',
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true
+      const cloneTables = clone.querySelectorAll('table');
+      cloneTables.forEach(cloneTable => {
+        if (cloneTable) {
+          cloneTable.style.width = '100%';
+          cloneTable.style.tableLayout = 'fixed';
+        }
       });
       
+      const rows = clone.querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 10) {
+          cells[9].remove();
+        }
+      });
+      
+      // Process all select dropdowns and inputs for each row
+      const tableRows = clone.querySelectorAll('tbody tr');
+      tableRows.forEach((row, index) => {
+        if (index < usersToProcess.length) {
+          const user = usersToProcess[index];
+          
+          // Replace restarts dropdown (column 5)
+          const restartsTd = row.children[5];
+          if (restartsTd) {
+            const span = document.createElement('span');
+            span.textContent = user.restarts;
+            const textColor = user.status === 'Not Working' ? '#b91c1c' : '#111827';
+            span.style.cssText = `display: block; width: 100%; text-align: center; font-size: 1rem; color: ${textColor}; font-weight: 500;`;
+            restartsTd.innerHTML = '';
+            restartsTd.appendChild(span);
+          }
+          
+          // Replace reason dropdown (column 7)
+          const reasonTd = row.children[7];
+          if (reasonTd) {
+            const span = document.createElement('span');
+            if (user.status === 'Not Working' && user.reason) {
+              span.textContent = user.reason;
+              span.style.cssText = 'display:block;text-align:center;padding:4px 8px;border-radius:4px;background:#fef2f2;font-size:1rem;color:#b91c1c;font-weight:500;';
+            } else {
+              span.textContent = '-';
+              span.style.cssText = 'display:block;text-align:center;font-size:1rem;color:#9ca3af;';
+            }
+            reasonTd.innerHTML = '';
+            reasonTd.appendChild(span);
+          }
+          
+          // Replace date input (column 8)
+          const dateTd = row.children[8];
+          if (dateTd) {
+            const span = document.createElement('span');
+            span.textContent = user.lastWorking;
+            const textColor = user.status === 'Not Working' ? '#b91c1c' : '#111827';
+            span.style.cssText = `display: block; width: 100%; text-align: center; font-size: 1rem; color: ${textColor}; font-weight: 500;`;
+            dateTd.innerHTML = '';
+            dateTd.appendChild(span);
+          }
+        }
+      });
+
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '0';
+      clone.style.width = '1600px';
+      clone.style.maxWidth = '1600px';
+      clone.style.padding = '0';
+      clone.style.paddingBottom = '0';
+      clone.style.margin = '0';
+      clone.style.boxSizing = 'border-box';
+      clone.style.background = '#f0f4ff';
+      
+      const sections = clone.querySelectorAll('.mb-8');
+      if (sections.length > 0) {
+        sections[sections.length - 1].style.marginBottom = '0';
+      }
+
+      document.body.appendChild(clone);
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const html2canvas = (await import('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/+esm')).default;
+      const canvas = await html2canvas(clone, {
+        backgroundColor: '#f0f4ff',
+        scale: 2.5,
+        width: 1600,
+        windowWidth: 1600,
+        useCORS: true,
+        allowTaint: true,
+        logging: false
+      });
+
       document.body.removeChild(clone);
       
       canvas.toBlob((blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `balady_tracker_${getCurrentDate().replace(/\//g, '_')}.png`;
+        const sectionName = section === 'both' ? 'tracker' : section;
+        a.download = `${sectionName}_${getCurrentDate().replace(/\//g, '_')}.png`;
         a.click();
         window.URL.revokeObjectURL(url);
       });
@@ -366,7 +469,7 @@ const App = () => {
                 Export CSV
               </button>
               <button
-                onClick={takeScreenshot}
+                onClick={() => takeScreenshot('both')}
                 className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
               >
                 <Camera size={18} />
