@@ -1,25 +1,436 @@
-import logo from './logo.svg';
-import './App.css';
+import html2canvas from 'html2canvas';
+import React, { useState } from 'react';
+import { Download, RefreshCw, Camera } from 'lucide-react';
 
-function App() {
+const App = () => {
+  const [baladyUsers, setBaladyUsers] = useState(() => {
+    const saved = window.localStorage ? localStorage.getItem('baladyUsers') : null;
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [
+      { id: 1, name: "Hussam", contact: "+966 55 498 7925", district: "Najran", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/17/2025" },
+      { id: 2, name: "Adel", contact: "+966 54 717 4763", district: "Abha", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 3, name: "Sajjad", contact: "+966 59 272 6929", district: "Qassim", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 4, name: "Zuabi", contact: "+966 55 898 9569", district: "Jizan", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/17/2025" },
+      { id: 5, name: "Alwan", contact: "+966 53 754 6944", district: "Jeddah", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 6, name: "Yaser", contact: "+966 55 022 2717", district: "Jizan", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 7, name: "Sultan", contact: "+966 53 131 3677", district: "Dammam", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 8, name: "Abdullah", contact: "+966 50 333 8299", district: "Hofuf", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 9, name: "Radi", contact: "+966 55 511 3243", district: "Hafar Al Batin", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/16/2025" },
+      { id: 10, name: "Abdullah", contact: "+966 58 062 3851", district: "Madinah", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 11, name: "Bilawal", contact: "+966 53 868 2527", district: "Baha", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/16/2025" },
+      { id: 12, name: "Zowaid", contact: "+966 55 508 6028", district: "Makkah", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 13, name: "Abdulrahman", contact: "+966 53 246 1832", district: "Tabuk", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/18/2025" },
+      { id: 14, name: "Abdulkarim", contact: "+966 56 522 1577", district: "Hail", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 15, name: "Fahad", contact: "+966 55 556 6948", district: "Taif", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 16, name: "Khalid", contact: "+966 54 751 3505", district: "Madinah", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 17, name: "Saud", contact: "+966 50 496 7156", district: "Sakaka", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/20/2025" },
+      { id: 18, name: "Hassan", contact: "+966 50 211 0938", district: "Jubail/Khafji", status: "Not Working", restarts: 0, restarted: "No", reason: "Waiting for OTP", lastWorking: "12/14/2025" }
+    ];
+  });
+
+  const [ripcUsers, setRipcUsers] = useState(() => {
+    const saved = window.localStorage ? localStorage.getItem('ripcUsers') : null;
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return [
+      { id: 1, name: "Ubaid", contact: "+966 50 766 6822", district: "Riyadh", status: "Working", restarts: 1, restarted: "Yes", reason: "", lastWorking: "12/23/2025" }
+    ];
+  });
+
+  const getCurrentDate = () => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const year = today.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
+  const updateAndSave = (userType) => {
+    const currentDate = getCurrentDate();
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const setUsers = userType === 'balady' ? setBaladyUsers : setRipcUsers;
+    const storageKey = userType === 'balady' ? 'baladyUsers' : 'ripcUsers';
+    
+    const updatedUsers = users.map(user => ({
+      ...user,
+      lastWorking: user.status === "Working" ? currentDate : user.lastWorking
+    }));
+    setUsers(updatedUsers);
+    if (window.localStorage) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedUsers));
+    }
+    alert(`${userType === 'balady' ? 'Balady' : 'RIPC'} data updated and saved successfully!`);
+  };
+
+  const toggleStatus = (id, userType) => {
+    const currentDate = getCurrentDate();
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const setUsers = userType === 'balady' ? setBaladyUsers : setRipcUsers;
+    const storageKey = userType === 'balady' ? 'baladyUsers' : 'ripcUsers';
+    
+    const updatedUsers = users.map(user => {
+      if (user.id === id) {
+        const newStatus = user.status === "Working" ? "Not Working" : "Working";
+        return {
+          ...user,
+          status: newStatus,
+          lastWorking: newStatus === "Working" ? currentDate : user.lastWorking,
+          restarts: newStatus === "Working" ? 1 : 0,
+          restarted: newStatus === "Working" ? "Yes" : "No",
+          reason: newStatus === "Not Working" ? "Waiting for OTP" : ""
+        };
+      }
+      return user;
+    });
+    setUsers(updatedUsers);
+    if (window.localStorage) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedUsers));
+    }
+  };
+
+  const exportToCSV = (userType) => {
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const label = userType === 'balady' ? 'Balady' : 'RIPC';
+    
+    const headers = ["Sr", `${label} User`, "Contact", "District", "RPA Status", "# of Restarts", "RPA Restarted?", "Reason", "Last Working Date"];
+    const rows = users.map(user => [
+      user.id,
+      user.name,
+      user.contact,
+      user.district,
+      user.status,
+      user.restarts,
+      user.restarted,
+      user.reason,
+      user.lastWorking
+    ]);
+    
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${label.toLowerCase()}_status_${getCurrentDate().replace(/\//g, '_')}.csv`;
+    a.click();
+  };
+
+  const takeScreenshot = async () => {
+    try {
+      const element = document.getElementById('tracker-content');
+      const clone = element.cloneNode(true);
+      
+      const cloneButtons = clone.querySelector('#action-buttons');
+      const cloneActionHeaders = clone.querySelectorAll('.action-column');
+      
+      if (cloneButtons) cloneButtons.remove();
+      cloneActionHeaders.forEach(el => el.remove());
+      
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      document.body.appendChild(clone);
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const canvas = await html2canvas(clone, {
+        backgroundColor: '#f0f4ff',
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true
+      });
+      
+      document.body.removeChild(clone);
+      
+      canvas.toBlob((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `balady_tracker_${getCurrentDate().replace(/\//g, '_')}.png`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      });
+    } catch (error) {
+      console.error('Screenshot error:', error);
+      alert('Error taking screenshot. Please try again.');
+    }
+  };
+
+  const updateReason = (id, reason, userType) => {
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const setUsers = userType === 'balady' ? setBaladyUsers : setRipcUsers;
+    const storageKey = userType === 'balady' ? 'baladyUsers' : 'ripcUsers';
+    
+    const updatedUsers = users.map(u => 
+      u.id === id ? { ...u, reason: reason } : u
+    );
+    setUsers(updatedUsers);
+    if (window.localStorage) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedUsers));
+    }
+  };
+
+  const updateLastWorking = (id, lastWorking, userType) => {
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const setUsers = userType === 'balady' ? setBaladyUsers : setRipcUsers;
+    const storageKey = userType === 'balady' ? 'baladyUsers' : 'ripcUsers';
+    
+    const updatedUsers = users.map(u => 
+      u.id === id ? { ...u, lastWorking: lastWorking } : u
+    );
+    setUsers(updatedUsers);
+    if (window.localStorage) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedUsers));
+    }
+  };
+
+  const updateRestarts = (id, restarts, userType) => {
+    const users = userType === 'balady' ? baladyUsers : ripcUsers;
+    const setUsers = userType === 'balady' ? setBaladyUsers : setRipcUsers;
+    const storageKey = userType === 'balady' ? 'baladyUsers' : 'ripcUsers';
+    
+    const updatedUsers = users.map(u => 
+      u.id === id ? { ...u, restarts: parseInt(restarts) } : u
+    );
+    setUsers(updatedUsers);
+    if (window.localStorage) {
+      localStorage.setItem(storageKey, JSON.stringify(updatedUsers));
+    }
+  };
+
+  const renderTable = (users, userType) => {
+    const label = userType === 'balady' ? 'Balady' : 'RIPC';
+    
+    return (
+      <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse" style={{minWidth: '1150px'}}>
+            <thead className="bg-blue-900 text-white">
+              <tr>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '50px'}}>Sr</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '120px'}}>{label} User</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '140px'}}>Contact</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '120px'}}>District</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '110px'}}>RPA Status</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '100px'}}># of Restarts</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '120px'}}>RPA Restarted?</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '160px'}}>Reason</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold" style={{width: '130px'}}>Last Working Date</th>
+                <th className="px-2 py-3 text-center text-sm font-semibold action-column" style={{width: '100px'}}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr 
+                  key={user.id} 
+                  className={`${user.status === "Not Working" ? "bg-red-50" : "bg-white"} border-b hover:bg-gray-50 transition`}
+                >
+                  <td className={`px-2 py-3 text-center ${user.status === "Not Working" ? "text-red-700" : "text-gray-900"}`} style={{width: '50px', fontSize: '1rem'}}>{user.id}</td>
+                  <td className={`px-2 py-3 text-center font-medium ${user.status === "Not Working" ? "text-red-700" : "text-gray-900"}`} style={{width: '120px', fontSize: '1rem'}}>
+                    {user.name}
+                  </td>
+                  <td className={`px-2 py-3 text-center ${user.status === "Not Working" ? "text-red-700" : "text-blue-600"}`} style={{width: '140px', fontSize: '1rem'}}>
+                    {user.contact}
+                  </td>
+                  <td className={`px-2 py-3 text-center font-medium ${user.status === "Not Working" ? "text-red-700" : "text-gray-700"}`} style={{width: '120px', fontSize: '1rem'}}>
+                    {user.district}
+                  </td>
+                  <td className="px-2 py-3 text-center" style={{width: '110px'}}>
+                    <span className={`font-semibold ${
+                      user.status === "Working" 
+                        ? "text-green-800" 
+                        : "text-red-700"
+                    }`} style={{fontSize: '1rem'}}>
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className={`px-2 py-3 text-center font-medium ${user.status === "Not Working" ? "text-red-700" : "text-gray-900"}`} style={{width: '100px', fontSize: '1rem'}}>
+                    <select
+                      value={user.restarts}
+                      onChange={(e) => updateRestarts(user.id, e.target.value, userType)}
+                      className={`w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer font-medium ${user.status === "Not Working" ? "text-red-700 bg-red-50" : "text-gray-900 bg-white"}`}
+                      style={{fontSize: '1rem'}}
+                    >
+                      <option value="0">0</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="5">5</option>
+                    </select>
+                  </td>
+                  <td className="px-2 py-3 text-center" style={{width: '120px'}}>
+                    <span className={`font-medium ${user.restarted === "Yes" ? "text-green-800" : "text-red-700"}`} style={{fontSize: '1rem'}}>
+                      {user.restarted}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3" style={{width: '160px'}}>
+                    {user.status === "Not Working" ? (
+                      <select
+                        value={user.reason}
+                        onChange={(e) => updateReason(user.id, e.target.value, userType)}
+                        className="w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-red-700 font-medium bg-red-50"
+                        style={{fontSize: '1rem'}}
+                      >
+                        <option value="">Select Reason</option>
+                        <option value="Waiting for OTP">Waiting for OTP</option>
+                        <option value="OTP not received">OTP not received</option>
+                      </select>
+                    ) : (
+                      <div className="text-center text-gray-400" style={{fontSize: '1rem'}}>-</div>
+                    )}
+                  </td>
+                  <td className="px-2 py-3" style={{width: '130px'}}>
+                    <input
+                      type="text"
+                      value={user.lastWorking}
+                      onFocus={(e) => {
+                        const parts = user.lastWorking.split('/');
+                        if (parts.length === 3 && !parts.includes('undefined')) {
+                          const [month, day, year] = parts;
+                          if (month && day && year) {
+                            e.target.type = 'date';
+                            e.target.value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                          }
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (e.target.value && e.target.type === 'date') {
+                          const [year, month, day] = e.target.value.split('-');
+                          if (year && month && day) {
+                            const formatted = `${month}/${day}/${year}`;
+                            updateLastWorking(user.id, formatted, userType);
+                          }
+                        }
+                        e.target.type = 'text';
+                      }}
+                      onChange={(e) => {
+                        if (e.target.type === 'date' && e.target.value) {
+                          const [year, month, day] = e.target.value.split('-');
+                          if (year && month && day) {
+                            const formatted = `${month}/${day}/${year}`;
+                            updateLastWorking(user.id, formatted, userType);
+                          }
+                        }
+                      }}
+                      className={`w-full px-2 py-1 border border-gray-300 rounded text-center focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer bg-white font-medium ${
+                        user.status === "Not Working" ? "text-red-700" : "text-gray-900"
+                      }`}
+                      style={{fontSize: '1rem'}}
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-center action-column" style={{width: '100px'}}>
+                    <button
+                      onClick={() => toggleStatus(user.id, userType)}
+                      className={`px-3 py-1 rounded text-xs font-semibold transition ${
+                        user.status === "Working"
+                          ? "bg-red-500 hover:bg-red-600 text-white"
+                          : "bg-green-500 hover:bg-green-600 text-white"
+                      }`}
+                    >
+                      {user.status === "Working" ? "Mark Down" : "Mark Up"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="max-w-7xl mx-auto" id="tracker-content">
+        <div className="bg-white rounded-lg shadow-xl p-6 mb-6 main-header">
+          <div className="flex justify-end items-start">
+            <div className="flex gap-3 action-buttons">
+              <button
+                onClick={() => updateAndSave('balady')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              >
+                <RefreshCw size={18} />
+                Update
+              </button>
+              <button
+                onClick={() => exportToCSV('balady')}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                <Download size={18} />
+                Export CSV
+              </button>
+              <button
+                onClick={takeScreenshot}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+              >
+                <Camera size={18} />
+                Get Both SS
+              </button>
+              <button
+                onClick={() => takeScreenshot('balady')}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+              >
+                <Camera size={18} />
+                Balady SS
+              </button>
+              <button
+                onClick={() => takeScreenshot('ripc')}
+                className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition"
+              >
+                <Camera size={18} />
+                RIPC SS
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-8" id="balady-section">
+          <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+            <h2 className="text-3xl font-bold text-blue-900 mb-2">Balady User Update [Evening Shift]</h2>
+            <div className="text-sm text-gray-600">
+              <p><strong>Auto-Update Logic:</strong> "Working" users show current date ({getCurrentDate()}), "Not Working" users keep their last working date.</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200 flex flex-col items-center justify-center">
+                <p className="text-3xl font-bold text-green-700">{baladyUsers.filter(u => u.status === "Working").length}</p>
+                <p className="text-sm text-gray-600 font-semibold">Working</p>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4 border-2 border-red-200 flex flex-col items-center justify-center">
+                <p className="text-3xl font-bold text-red-700">{baladyUsers.filter(u => u.status === "Not Working").length}</p>
+                <p className="text-sm text-gray-600 font-semibold">Not Working</p>
+              </div>
+              <div className="bg-blue-50 rounded-lg p-4 border-2 border-blue-200 flex flex-col items-center justify-center">
+                <p className="text-3xl font-bold text-blue-700">{baladyUsers.length}</p>
+                <p className="text-sm text-gray-600 font-semibold">Total Users</p>
+              </div>
+            </div>
+          </div>
+
+          {renderTable(baladyUsers, 'balady')}
+        </div>
+
+        <div className="mb-8" id="ripc-section">
+          <div className="bg-white rounded-lg shadow-xl p-6 mb-6">
+            <h2 className="text-3xl font-bold text-blue-900 mb-2">RIPC User Update [Evening Shift]</h2>
+            <div className="text-sm text-gray-600">
+              <p><strong>Auto-Update Logic:</strong> "Working" users show current date ({getCurrentDate()}), "Not Working" users keep their last working date.</p>
+            </div>
+          </div>
+
+          {renderTable(ripcUsers, 'ripc')}
+        </div>
+      </div>
     </div>
   );
-}
+};
 
 export default App;
